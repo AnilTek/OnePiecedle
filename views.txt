@@ -1,0 +1,155 @@
+from django.shortcuts import render,HttpResponse
+import pandas as pd
+import csv
+import os
+from django.conf import settings
+import random 
+
+# Create your views here.
+csv_file_path = os.path.join(settings.BASE_DIR, 'Onepieceapp', 'character_data.csv')
+characters_data = {}
+
+is_random_char_exists = False 
+
+with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        character_name = row['name']  
+        characters_data[character_name] = {
+            'affiliation': row['affiliation'],
+            'devil_fruit': row['devil_fruit'],
+            'bounty': row['bounty'],
+            'height': row['height'],
+            'origin': row['origin'],
+            'haki': row['haki'],
+            'image': row['image']
+        }
+keys = list(characters_data.keys())
+
+def base(request):
+    global is_random_char_exists
+    def get_char_info(char):
+        char_info_list = []
+        char_info_list.append(char["affiliation"])
+        char_info_list.append(char["devil_fruit"])
+        char_info_list.append(char["bounty"])
+        char_info_list.append(char["height"])
+        char_info_list.append(char["origin"])
+        char_info_list.append(char["haki"])
+        char_info_list.append(char["image"])
+        return char_info_list
+
+    if not is_random_char_exists:
+        random_key = random.choice(keys)
+        selected_character = characters_data[random_key]
+        random_selected_char_list = get_char_info(char=selected_character)
+        is_random_char_exists = True
+    else:
+        if 'random_selected_char_list' not in locals():
+            random_key = random.choice(keys)
+            selected_character = characters_data[random_key]
+            random_selected_char_list = get_char_info(char=selected_character)
+
+
+    users_char = request.GET.get('character')
+
+    if not users_char:
+        return render(request, 'base.html')
+
+    
+    if users_char in characters_data:
+        selected_char = characters_data[users_char]
+        users_char_list = get_char_info(char=selected_char)
+    else:
+        return HttpResponse("Character not found")
+        
+    
+    def compare_chars(random_char,user_char):
+       results_affiliation = compare_affiliation(random_char=random_char,user_char=user_char)
+       results_devil_fruit = compare_devil_fruit(random_char=random_char,user_char=user_char)
+       results_bounty = compare_bounty(random_char=random_char,user_char=user_char)
+       results_height = compare_height(random_char=random_char,user_char=user_char)
+       results_origin = compare_origin(random_char=random_char,user_char=user_char)
+       results_haki = compare_haki(random_char=random_char,user_char=user_char)
+
+       return [results_affiliation, results_devil_fruit, results_bounty, results_height, results_origin, results_haki]
+
+
+
+    def compare_affiliation(random_char,user_char):
+       is_affiliation_same = False
+       if random_char[0] == user_char[0]:
+           is_affiliation_same = True
+       else:
+           pass
+
+       return is_affiliation_same
+
+    def compare_devil_fruit(random_char,user_char):
+       is_devil_fruit_same = False
+       if random_char[1] == user_char[1]:
+        is_devil_fruit_same = True
+       else:
+           pass
+
+       return is_devil_fruit_same
+
+    def compare_bounty(random_char,user_char):
+       is_bounty_same = 0 # 0 for same 1 for higher 2 for lower
+       if random_char[2] == user_char[2]:
+           is_bounty_same = 0
+       elif random_char[2] > user_char[2]:
+           is_bounty_same = 1
+       else:
+           is_bounty_same = 2
+
+       return is_bounty_same
+
+    def compare_height(random_char,user_char):
+       is_height_same = 0 # 0 for same 1 for higher 2 for lower
+       if random_char[3] == user_char[3]:
+           is_height_same = 0
+       elif random_char[3] > user_char[3]:
+           is_height_same = 1
+       else:
+           is_height_same = 2
+
+       return is_height_same
+
+    def compare_origin(random_char,user_char):
+       is_origin_same = False
+       if random_char[4] == user_char[4]:
+           is_origin_same = True
+       else:
+           pass
+       return is_origin_same
+
+    def compare_haki(random_char,user_char):
+       is_haki_same = False
+       if random_char[5] == user_char[5]:
+           is_haki_same = True
+       else:
+           pass
+       return is_haki_same
+    
+    results_of_comp = compare_chars(random_char=random_selected_char_list,user_char=users_char_list)
+
+    context = {
+        'results': results_of_comp, 
+        'random_character': random_selected_char_list,
+        'user_character': users_char_list,
+        'affiliation_correct': results_of_comp[0],
+        'devil_fruit_correct': results_of_comp[1],
+        'bounty_comparison': results_of_comp[2],
+        'height_comparison': results_of_comp[3],
+        'origin_correct': results_of_comp[4],
+        'haki_correct': results_of_comp[5],
+    }
+    
+
+    print(results_of_comp)
+
+    return render(request, 'base.html', context)
+
+
+    
